@@ -1,0 +1,40 @@
+from pydantic import BaseModel
+from typing import Optional, List
+
+class LogFilters(BaseModel):
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    status_code: Optional[int] = None
+    client_id: Optional[str] = None
+    success: Optional[bool] = None
+    
+class ImageContext(BaseModel):
+    content: str
+    format: str
+    position_after_paragraph: int
+    
+class MediaContext(BaseModel):
+    video_emotion: Optional[str] = None
+    video_confidence: Optional[float] = None
+    images: Optional[List[ImageContext]] = None
+    
+class EntryData(BaseModel):
+    title: str
+    text: str
+    
+class ClassificationRequest(BaseModel):
+    entry_data: EntryData
+    media_context: Optional[MediaContext] = None
+    
+class EmotionClassification(BaseModel):
+    emotion: str
+    similarity: float
+    
+class EmotionTag(BaseModel):
+    tags: str
+    similarity: float
+    
+class ClassificationResponse(BaseModel):
+    emotion_classification: EmotionClassification
+    emotion_tags: List[EmotionTag]
+    latency_ms: int
