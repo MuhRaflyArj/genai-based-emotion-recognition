@@ -1,6 +1,7 @@
 from langchain_openai import OpenAIEmbeddings
 from ..config import settings
 from scipy.spatial.distance import cosine
+from . import model_provider
 
 emotion_categories = {
     # --- Positive Emotions ---
@@ -61,10 +62,7 @@ def get_embedding_model():
     if not settings.OPENAI_API_KEY:
         raise ValueError("OpenAI API key is invalid.")
     
-    model = OpenAIEmbeddings(
-        model="text-embedding-3-large", 
-        openai_api_key=settings.OPENAI_API_KEY
-    )
+    model = model_provider.get_embedding_model()
     
     return model
 

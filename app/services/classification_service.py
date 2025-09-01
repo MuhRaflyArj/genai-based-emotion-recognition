@@ -41,7 +41,7 @@ def classify_journal(
     sorted_tags = sorted(all_tags, key=lambda x: x['similarity'], reverse=True)
     top_tags = [sorted_tags[0]]
     best_tag_score = sorted_tags[0]['similarity']  
-    threshold = best_tag_score * 0.80
+    threshold = best_tag_score * 0.95
     
     candidate_tags = []
     for tag in sorted_tags[1:]:

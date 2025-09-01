@@ -3,6 +3,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from ..schemas import ImageContext
 from ..config import settings
 import base64
+from . import model_provider
 
 def generate_image_descriptions(
     images: list[ImageContext]
@@ -10,11 +11,7 @@ def generate_image_descriptions(
     if not settings.OPENAI_API_KEY:
         raise ValueError("OpenAI API key is invalid.")
     
-    model = ChatOpenAI(
-        model='gpt-4o-mini',
-        openai_api_key = settings.OPENAI_API_KEY,
-        temperature=0.35
-    )
+    model = model_provider.get_llm(temperature=0.3)
     
     system_message = SystemMessage(
         content="""You are an expert at analyzing images for a personal journal. 

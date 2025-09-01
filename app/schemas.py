@@ -38,3 +38,19 @@ class ClassificationResponse(BaseModel):
     emotion_classification: EmotionClassification
     emotion_tags: List[EmotionTag]
     latency_ms: int
+    
+class ClassificationResponse(BaseModel):
+    emotion_classification: EmotionClassification
+    emotion_tags: List[EmotionTag]
+    latency_ms: int
+
+class IllustrationRequest(BaseModel):
+    journal_text: str
+    style_preference: str = "digital painting"
+    num_images: int = 1
+
+class IllustrationResponse(BaseModel):
+    images: List[str] # List of base64 encoded images
+    prompt: str
+    position_after_paragraph: int
+    latency_ms: int
