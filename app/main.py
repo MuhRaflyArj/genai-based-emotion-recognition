@@ -1,6 +1,7 @@
 import time
 from fastapi import FastAPI, Request, Depends, Query, HTTPException, status
 from typing import Optional
+from langchain_core.messages import HumanMessage
 
 from .dependencies import verify_api_key
 from .logutils.logger import get_logs, log_request
@@ -8,7 +9,9 @@ from .logutils.logger import get_logs, log_request
 from .services import (
     classification_service, 
     embedding_service, 
-    illustration_service
+    illustration_service,
+    elaboration_service,
+    session_service
 )
 
 from .schemas import(
@@ -16,7 +19,9 @@ from .schemas import(
     ClassificationRequest, 
     ClassificationResponse, 
     IllustrationRequest, 
-    IllustrationResponse
+    IllustrationResponse,
+    ElaborationChatRequest,
+    ElaborationChatResponse
 )
 
 app = FastAPI()
@@ -97,6 +102,52 @@ async def generate_illustration(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal Server Error: {e}"
+        )
+        
+@app.post(
+    "/elaboration-chat", response_model=ElaborationChatResponse, dependencies=[Depends(verify_api_key)])
+async def elaboration_chat(request: ElaborationChatRequest):
+    
+    memory = session_service.create_session_memory(request.uuid)
+    
+    if request.journal_data and request.journal_data.text:
+
+        context_message = f"The user has just written or updated their journal. Here is the latest version:\n\n{request.journal_data.text}"
+        memory.chat_memory.add_message(HumanMessage(context_message))
+        
+        suggestion = elaboration_service.analyze_journal_for_elaboration(
+            journal_text=request.journal_data.text
+        )
+        
+        return ElaborationChatResponse(
+            uuid=request.uuid,
+            elaboration_suggestion=suggestion,
+            assistant_response=None,
+            is_final_message=False
+        )
+        
+    elif request.user_chat_input:
+        response_data = elaboration_service.generate_compassionate_response(
+            memory=memory,
+            user_input=request.user_chat_input
+        )
+        
+        memory.save_context(
+            {"input": request.user_chat_input},
+            {"output": response_data["assistant_response"]}
+        )
+        
+        return ElaborationChatResponse(
+            uuid=request.uuid,
+            elaboration_suggestion=None,
+            assistant_response=response_data["assistant_response"],
+            is_final_message=response_data["is_final_message"]
+        )
+        
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request: Either 'journal_data' with text or 'user_chat_input' must be provided."
         )
 
 

@@ -54,3 +54,24 @@ class IllustrationResponse(BaseModel):
     prompt: str
     position_after_paragraph: int
     latency_ms: int
+    
+class ElaborationSuggestion(BaseModel):
+    strategy_used: str
+    suggestion_text: str
+    highlight_text: str
+
+class JournalData(BaseModel):
+    text: str
+    user_images: Optional[List[str]] = None
+
+class ElaborationChatRequest(BaseModel):
+    uuid: str
+    journal_data: Optional[JournalData] = None
+    user_chat_input: Optional[str] = None
+    
+class ElaborationChatResponse(BaseModel):
+    uuid: str
+    elaboration_suggestion: Optional[ElaborationSuggestion] = None
+    assistant_response: Optional[str] = None
+    is_final_message: bool
+    

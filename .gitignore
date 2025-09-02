@@ -24,3 +24,6 @@ app/logutils/api_logs.csv
 *.ntvs*
 *.njsproj
 *.sln
+
+extract.py
+codebase_summary.md
