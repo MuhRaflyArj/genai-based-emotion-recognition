@@ -56,6 +56,7 @@ class IllustrationResponse(BaseModel):
     latency_ms: int
     
 class ElaborationSuggestion(BaseModel):
+    paragraph_index: int
     strategy_used: str
     suggestion_text: str
     highlight_text: str

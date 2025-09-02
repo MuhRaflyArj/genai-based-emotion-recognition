@@ -108,17 +108,21 @@ async def generate_illustration(
     "/elaboration-chat", response_model=ElaborationChatResponse, dependencies=[Depends(verify_api_key)])
 async def elaboration_chat(request: ElaborationChatRequest):
     
-    memory = session_service.create_session_memory(request.uuid)
+    session = session_service.create_session_memory(request.uuid)
     
     if request.journal_data and request.journal_data.text:
 
         context_message = f"The user has just written or updated their journal. Here is the latest version:\n\n{request.journal_data.text}"
-        memory.chat_memory.add_message(HumanMessage(context_message))
+        session.chat_memory.chat_memory.add_message(HumanMessage(content=context_message))
         
         suggestion = elaboration_service.analyze_journal_for_elaboration(
-            journal_text=request.journal_data.text
+            journal_text=request.journal_data.text,
+            excluded_paragraph_indices=session.suggested_paragraph_indicies
         )
         
+        if suggestion:
+            session.suggested_paragraph_indicies.add(suggestion.paragraph_index)
+
         return ElaborationChatResponse(
             uuid=request.uuid,
             elaboration_suggestion=suggestion,
@@ -128,11 +132,11 @@ async def elaboration_chat(request: ElaborationChatRequest):
         
     elif request.user_chat_input:
         response_data = elaboration_service.generate_compassionate_response(
-            memory=memory,
+            memory=session.chat_memory,
             user_input=request.user_chat_input
         )
-        
-        memory.save_context(
+
+        session.chat_memory.save_context(
             {"input": request.user_chat_input},
             {"output": response_data["assistant_response"]}
         )
