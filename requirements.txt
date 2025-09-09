@@ -1,0 +1,16 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+
+# OpenAI & LangChain
+openai
+langchain
+langchain-core
+langchain-openai
+
+# Data Validation
+pydantic
+
+# Utilities
+python-dotenv
+scipy
