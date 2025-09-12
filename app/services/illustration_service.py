@@ -58,12 +58,19 @@ def extract_visual_essence(paragraph: str) -> list[str]:
     structured_llm = llm.with_structured_output(VisualEssence)
     
     system_message = SystemMessage(
-        content="""You are an expert in extracting visual details from text. 
+        content="""You are an expert in extracting visual details from text for an art generation model.
         From the given paragraph, identify the key visual elements (subjects, objects, setting, actions).
-        Return these elements as a JSON array of strings. Each string should be a concise descriptive phrase.
+
+        **IMPORTANT SAFETY RULE:** Your primary goal is to interpret the user's text in a way that is safe for an AI image generator.
+        - **DO NOT** extract any elements that depict or imply self-harm, violence, gore, explicit adult content, or hate symbols.
+        - If the text contains sensitive themes, rephrase them into abstract or symbolic representations. For example, instead of "a bloody knife," extract "a crimson object casting a long shadow." Instead of a violent act, describe the emotional aftermath, like "a sense of turmoil represented by stormy clouds."
+        - Focus on creating a visually rich and emotionally resonant scene that is artistic and G-rated.
+
+        Return these safe and rephrased elements as a JSON array of strings. Each string should be a concise descriptive phrase.
         Example output: ["a person sitting on a park bench", "autumn leaves falling", "a red scarf", "a distant city skyline"]
         Return ONLY the JSON array."""
     )
+
     human_message = HumanMessage(content=paragraph)
     
     try:
@@ -85,7 +92,6 @@ def assemble_illustration_prompt(
         "Focus on a clear composition that tells a story. The overall tone should be artistic and evocative."
     )
     
-    print(prompt)
     return prompt
 
 def generate_illustration(

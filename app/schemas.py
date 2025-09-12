@@ -48,6 +48,7 @@ class IllustrationRequest(BaseModel):
     journal_text: str
     style_preference: str = "digital painting"
     num_images: int = 1
+    filled_paragraph: List[int] = []
 
 class IllustrationResponse(BaseModel):
     images: List[str] # List of base64 encoded images

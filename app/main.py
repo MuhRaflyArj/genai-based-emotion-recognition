@@ -21,7 +21,8 @@ from .schemas import(
     IllustrationRequest, 
     IllustrationResponse,
     ElaborationChatRequest,
-    ElaborationChatResponse
+    ElaborationChatResponse,
+
 )
 
 app = FastAPI()
@@ -73,6 +74,26 @@ async def generate_illustration(
     start_time = time.perf_counter()
     try:
         illustrable_paragraph, position = illustration_service.identify_illustrable_paragraph(payload.journal_text)
+
+        # 1. Count the total number of paragraphs in the journal
+        paragraphs = [p for p in payload.journal_text.split('\n\n') if p.strip()]
+        total_paragraphs = len(paragraphs)
+        
+        final_position = -1
+        for i in range(position, 0, -1):
+            if i not in payload.filled_paragraph:
+                final_position = i
+                break
+        
+        if final_position == -1:
+            for i in range(position + 1, total_paragraphs + 1):
+                if i not in payload.filled_paragraph:
+                    final_position = i
+                    break
+        
+        if final_position == -1:
+            final_position = 0 
+
         visual_essence = illustration_service.extract_visual_essence(illustrable_paragraph)
         
         final_prompt = illustration_service.assemble_illustration_prompt(
@@ -91,7 +112,7 @@ async def generate_illustration(
         return IllustrationResponse(
             images=generated_images,
             prompt=final_prompt,
-            position_after_paragraph=position,
+            position_after_paragraph=final_position,
             latency_ms=latency_ms
         )
         

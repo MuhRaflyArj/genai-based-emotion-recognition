@@ -166,9 +166,12 @@ Generates a unique illustration based on the most visually descriptive paragraph
     {
       "journal_text": "But not everything was serene! I'm convinced my rental surfboard had a personal vendetta against me today...",
       "style_preference": "digital painting",
-      "num_images": 1
+      "num_images": 1,
+      "filled_paragraph": [2]
     }
     ```
+    - `filled_paragraph` (Optional `List[int]`): A list of 1-based paragraph indices that already have an image placed after them. This is used to avoid placing the new illustration in an occupied slot.
+---
 
 * **Successful Response (200 OK):**
 
