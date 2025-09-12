@@ -27,3 +27,5 @@ app/logutils/api_logs.csv
 
 extract.py
 codebase_summary.md
+
+.DS_Store
