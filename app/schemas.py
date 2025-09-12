@@ -75,4 +75,3 @@ class ElaborationChatResponse(BaseModel):
     elaboration_suggestion: Optional[ElaborationSuggestion] = None
     assistant_response: Optional[str] = None
     is_final_message: bool
-    
