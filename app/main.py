@@ -108,50 +108,41 @@ async def generate_illustration(
     "/elaboration-chat", response_model=ElaborationChatResponse, dependencies=[Depends(verify_api_key)])
 async def elaboration_chat(request: ElaborationChatRequest):
     
-    session = session_service.create_session_memory(request.uuid)
+    session = session_service.get_session(request.uuid)
     
-    if request.journal_data and request.journal_data.text:
-
-        context_message = f"The user has just written or updated their journal. Here is the latest version:\n\n{request.journal_data.text}"
-        session.chat_memory.chat_memory.add_message(HumanMessage(content=context_message))
-        
+    if request.task == "elaborate":
         suggestion = elaboration_service.analyze_journal_for_elaboration(
             journal_text=request.journal_data.text,
-            excluded_paragraph_indices=session.suggested_paragraph_indicies
+            excluded_highlights=session.excluded_highlights,
+            chat_history=session.chat_history
         )
         
-        if suggestion:
-            session.suggested_paragraph_indicies.add(suggestion.paragraph_index)
-
-        return ElaborationChatResponse(
-            uuid=request.uuid,
-            elaboration_suggestion=suggestion,
-            assistant_response=None,
-            is_final_message=False
-        )
-        
-    elif request.user_chat_input:
-        response_data = elaboration_service.generate_compassionate_response(
-            memory=session.chat_memory,
-            user_input=request.user_chat_input
-        )
-
-        session.chat_memory.save_context(
-            {"input": request.user_chat_input},
-            {"output": response_data["assistant_response"]}
+        if not suggestion:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No more paragraphs to elaborate on or journal is too short."
+            )
+            
+        if suggestion.paragraph_index != -1:
+            session.excluded_highlights.add(suggestion.highlight_text)
+            
+        session.chat_history.add_elaborate_interaction(
+            journal_data=request.journal_data,
+            suggestion=suggestion
         )
         
         return ElaborationChatResponse(
             uuid=request.uuid,
-            elaboration_suggestion=None,
-            assistant_response=response_data["assistant_response"],
-            is_final_message=response_data["is_final_message"]
+            elaboration_suggestion=suggestion
         )
+        
+    elif request.task == "ask":
+        pass
         
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid request: Either 'journal_data' with text or 'user_chat_input' must be provided."
+            detail="Invalid request"
         )
 
 
