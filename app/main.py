@@ -107,6 +107,7 @@ async def generate_illustration(
 @app.post(
     "/elaboration-chat", response_model=ElaborationChatResponse, dependencies=[Depends(verify_api_key)])
 async def elaboration_chat(request: ElaborationChatRequest):
+    print(request.task)
     
     session = session_service.get_session(request.uuid)
     
@@ -137,7 +138,27 @@ async def elaboration_chat(request: ElaborationChatRequest):
         )
         
     elif request.task == "ask":
-        pass
+        if not request.prompt or not request.prompt.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Prompt is required for 'ask' tasks."
+            )
+        
+        assistant_response = elaboration_service.generate_ask_response(
+            chat_history=session.chat_history,
+            prompt=request.prompt
+        )
+        
+        session.chat_history.add_ask_interaction(
+            journal_data=request.journal_data,
+            prompt=request.prompt,
+            assistant_response=assistant_response
+        )
+        
+        return ElaborationChatResponse(
+            uuid=request.uuid,
+            assistant_response=assistant_response
+        )
         
     else:
         raise HTTPException(

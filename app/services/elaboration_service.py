@@ -82,13 +82,6 @@ def analyze_journal_for_elaboration(
     chain = prompt | structured_llm
 
     try:
-        final_prompt = prompt.format_prompt(chat_history=chat_history.messages)
-        print("\n--- START OF LLM PROMPT ---")
-        for message in final_prompt.to_messages():
-            print(f"[{message.type.upper()}]")
-            print(message.content)
-        print("--- END OF LLM PROMPT ---\n")
-        
         choice = chain.invoke({"chat_history": chat_history.messages})
 
         if choice.strategy_used == "Completion":
@@ -108,3 +101,30 @@ def analyze_journal_for_elaboration(
     except Exception as e:
         print(f"Error generating elaboration suggestion: {e}")
         return None
+    
+def generate_ask_response(
+    chat_history: BaseChatMemory,
+    prompt: str
+) -> str:
+    
+    llm = model_provider.get_llm(temperature=0.4)
+    
+    system_prompt = """
+    You are a helpful and compassionate journaling assistant. Your role is to answer the user's questions based on the context of their journal and our entire conversation so far.
+
+    Use the provided conversation history, which includes both journal analysis ('elaborate' tasks) and previous questions ('ask' tasks), to understand the user's journey. Provide clear, supportive, and relevant answers. Your tone should be encouraging and insightful.
+    """
+    
+    ask_prompt = ChatPromptTemplate.from_messages([
+        SystemMessage(content=system_prompt),
+        MessagesPlaceholder(variable_name="chat_history"),
+        HumanMessage(content=prompt)
+    ])
+    
+    chain = ask_prompt | llm
+    
+    try:
+        response = chain.invoke({"chat_history": chat_history.messages, "input": prompt})
+        return response.content
+    except Exception as e:
+        return "I'm sorry, I encountered an error while trying to respond. Could you please try asking again?"
