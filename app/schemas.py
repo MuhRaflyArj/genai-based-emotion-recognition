@@ -68,11 +68,11 @@ class JournalData(BaseModel):
 
 class ElaborationChatRequest(BaseModel):
     uuid: str
-    journal_data: Optional[JournalData] = None
-    user_chat_input: Optional[str] = None
+    task: str
+    journal_data: JournalData
+    prompt: Optional[str] = None
     
 class ElaborationChatResponse(BaseModel):
     uuid: str
     elaboration_suggestion: Optional[ElaborationSuggestion] = None
     assistant_response: Optional[str] = None
-    is_final_message: bool
