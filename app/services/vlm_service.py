@@ -8,8 +8,8 @@ from . import model_provider
 def generate_image_descriptions(
     images: list[ImageContext]
 ) -> list[dict]:
-    if not settings.OPENAI_API_KEY:
-        raise ValueError("OpenAI API key is invalid.")
+    if not settings.GOOGLE_API_KEY:
+        raise ValueError("GOOGLE_API_KEY not found in settings.")
     
     model = model_provider.get_llm(temperature=0.3)
     
@@ -28,7 +28,7 @@ def generate_image_descriptions(
                 {
                     "type": "image_url",
                     "image_url": {
-                        "url": f"data:image/{image.format};base64,{image.content}"
+                        "url": f"data:image/jpeg;base64,{image.content}"
                     }
                 }
             ]

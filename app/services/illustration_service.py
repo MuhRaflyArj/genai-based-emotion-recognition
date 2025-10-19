@@ -1,4 +1,5 @@
 import json
+import base64
 from . import model_provider
 from pydantic import BaseModel, Field
 from typing import List
@@ -98,20 +99,20 @@ def generate_illustration(
     prompt: str, 
     num_images: int = 1
 ) -> list[str]:
-    client = model_provider.get_dalle_client()
+    model = model_provider.get_imagen_model()
+
+    response = model.generate_images(
+        prompt=prompt,
+        number_of_images=num_images,
+    )
     
     try:
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            n=num_images,
-            size="1792x1024",
-            quality="standard",
-            response_format="b64_json"
-        )
+        base64_images = []
+        for image in response.images:
+            image_bytes = image.image_bytes
+            base64_images.append(base64.b64encode(image_bytes).decode('utf-8'))
         
-        b64_images = [img.b64_json for img in response.data]
-        return b64_images
+        return base64_images
     
     except Exception as e:
         raise Exception(f"Failed to generate illustration with DALL-E: {e}")
