@@ -8,6 +8,10 @@ langchain
 langchain-core
 langchain-openai
 
+# Google GenAI
+langchain-google-genai 
+google-cloud-aiplatform
+
 # Data Validation
 pydantic
 
