@@ -109,7 +109,7 @@ def generate_illustration(
     try:
         base64_images = []
         for image in response.images:
-            image_bytes = image.image_bytes
+            image_bytes = image._image_bytes
             base64_images.append(base64.b64encode(image_bytes).decode('utf-8'))
         
         return base64_images
