@@ -9,4 +9,4 @@ if [ $(docker ps -q -f name=^/${CONTAINER_NAME}$) ]; then
 fi
 
 docker build -t ${IMAGE_NAME} .
-docker run -d -p 5001:5001 --env-file ./.env --name ${CONTAINER_NAME} ${IMAGE_NAME}
+docker run -d -p 5004:5004 --env-file ./.env --name ${CONTAINER_NAME} ${IMAGE_NAME}
