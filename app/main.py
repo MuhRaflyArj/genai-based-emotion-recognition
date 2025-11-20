@@ -73,39 +73,43 @@ async def generate_illustration(
 ):
     start_time = time.perf_counter()
     try:
-        illustrable_paragraph, position = illustration_service.identify_illustrable_paragraph(payload.journal_text)
+        illustrable_paragraph, position = illustration_service.identify_illustrable_paragraph(
+            payload.journal_text
+        )
 
-        # 1. Count the total number of paragraphs in the journal
-        paragraphs = [p for p in payload.journal_text.split('\n\n') if p.strip()]
+        paragraphs = [p for p in payload.journal_text.split("\n\n") if p.strip()]
         total_paragraphs = len(paragraphs)
-        
+
+        filled_positions = set(payload.filled_paragraph or [])
         final_position = -1
         for i in range(position, 0, -1):
-            if i not in payload.filled_paragraph:
+            if i not in filled_positions:
                 final_position = i
                 break
-        
+
         if final_position == -1:
             for i in range(position + 1, total_paragraphs + 1):
-                if i not in payload.filled_paragraph:
+                if i not in filled_positions:
                     final_position = i
                     break
-        
+
         if final_position == -1:
-            final_position = 0 
+            final_position = 0
 
         visual_essence = illustration_service.extract_visual_essence(illustrable_paragraph)
-        
+
         final_prompt = illustration_service.assemble_illustration_prompt(
             visual_essence=visual_essence,
             style_preference=payload.style_preference,
         )
-        
+
         generated_images = illustration_service.generate_illustration(
             prompt=final_prompt,
-            num_images=payload.num_images
+            num_images=payload.num_images,
+            user_id=payload.user_id,
+            journal_id=payload.journal_id,
         )
-        
+
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         log_request(request, 200, latency_ms, True)
 
@@ -113,16 +117,16 @@ async def generate_illustration(
             images=generated_images,
             prompt=final_prompt,
             position_after_paragraph=final_position,
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
-        
+
     except Exception as e:
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         log_request(request, 500, latency_ms, False, error_message=str(e))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal Server Error: {e}"
+            detail=f"Internal Server Error: {e}",
         )
         
 @app.post(

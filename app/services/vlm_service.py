@@ -1,52 +1,48 @@
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
+from app.cloud.storage_client import load_image, pil_image_to_data_url
 from ..schemas import ImageContext
 from ..config import settings
 import base64
 from . import model_provider
 
-def generate_image_descriptions(
-    images: list[ImageContext]
-) -> list[dict]:
+def generate_image_descriptions(images: list[ImageContext]) -> list[dict]:
+    if not images:
+        return []
+
     if not settings.GOOGLE_API_KEY:
-        raise ValueError("GOOGLE_API_KEY not found in settings.")
-    
-    model = model_provider.get_llm(temperature=0.3)
-    
-    system_message = SystemMessage(
-        content="""You are an expert at analyzing images for a personal journal. 
-        Your task is to describe the emotional mood, key subjects, 
-        and any significant actions or context in the image. 
-        Be descriptive but concise."""
-    )
-    
-    batch_messages = []
+        raise RuntimeError("GOOGLE_API_KEY is required for image description generation.")
+
+    llm = model_provider.get_llm()
+    descriptions: list[dict] = []
+
     for image in images:
-        human_message = HumanMessage(
-            content=[
-                {"type": "text", "text": "Describe this image"},
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{image.content}"
-                    }
-                }
-            ]
+        if not image.url.startswith("https://storage.googleapis.com"):
+            raise ValueError("Image URL must point to https://storage.googleapis.com")
+
+        pil_image = load_image(image.url)
+        data_url = pil_image_to_data_url(
+            pil_image,
+            image.format,
+            getattr(image, "encoding", None),
         )
-        
-        batch_messages.append([system_message, human_message])
-    
-    descriptions = []
-    try:
-        batch_responses = model.batch(batch_messages)
-        
-        for i, response in enumerate(batch_responses):
-            descriptions.append({
-                "position": images[i].position_after_paragraph,
-                "description": response.content
-            })
-            
-    except Exception as e:
-        raise Exception(f"An error occurred during VLM batch processing: {e}")
+
+        prompt = [
+            SystemMessage(content="You are an assistant that describes images for emotion analysis."),
+            HumanMessage(
+                content=[
+                    {"type": "text", "text": "Describe the key emotional cues in this image."},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ]
+            ),
+        ]
+        response = llm.invoke(prompt)
+
+        descriptions.append(
+            {
+                "description": response.content.strip(),
+                "position": image.position_after_paragraph,
+            }
+        )
 
     return descriptions

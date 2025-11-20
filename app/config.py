@@ -10,5 +10,7 @@ class Settings:
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "google_api_key")
     GCP_PROJECT: str = os.getenv("GCP_PROJECT", "your_gcp_project")
     GCP_LOCATION: str = os.getenv("GCP_LOCATION", "your_gcp_location")
+    BUCKET_NAME: str = os.getenv("BUCKET_NAME", "your_bucket_name")
+    GOOGLE_APPLICATION_CREDENTIALS: str = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "path_to_credentials")
 
 settings = Settings()

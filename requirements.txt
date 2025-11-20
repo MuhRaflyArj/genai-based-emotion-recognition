@@ -18,3 +18,5 @@ pydantic
 # Utilities
 python-dotenv
 scipy
+google-cloud-storage
+pillow
