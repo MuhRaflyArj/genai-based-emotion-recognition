@@ -7,6 +7,12 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from ..config import settings
 from . import model_provider
 
+from app.cloud.storage_client import (
+    build_illustration_blob_path,
+    generate_hashed_filename,
+    upload_bytes_to_bucket,
+)
+
 class VisualEssence(BaseModel):
     """A list of concise descriptive phrases representing the visual essence of a text."""
     visual_elements: List[str] = Field(
@@ -96,23 +102,38 @@ def assemble_illustration_prompt(
     return prompt
 
 def generate_illustration(
-    prompt: str, 
-    num_images: int = 1
+    prompt: str,
+    num_images: int,
+    user_id: str,
+    journal_id: str,
 ) -> list[str]:
     model = model_provider.get_imagen_model()
-
     response = model.generate_images(
         prompt=prompt,
         number_of_images=num_images,
     )
+
+    generated_items = response.images if hasattr(response, "images") else response
     
-    try:
-        base64_images = []
-        for image in response.images:
-            image_bytes = image._image_bytes
-            base64_images.append(base64.b64encode(image_bytes).decode('utf-8'))
+    if not generated_items:
+        raise RuntimeError("Image generation returned no images to upload.")
+
+    uploaded_urls: list[str] = []
+
+    for generated in generated_items:
+        image_bytes = getattr(generated, "_image_bytes", None)
+
+        mime_type = getattr(generated, "mime_type", "image/png")
+        extension = "png" if "png" in mime_type else "jpg"
+
+        filename = generate_hashed_filename(extension)
+        blob_path = build_illustration_blob_path(user_id, journal_id, filename)
         
-        return base64_images
-    
-    except Exception as e:
-        raise Exception(f"Failed to generate illustration with DALL-E: {e}")
+        public_url = upload_bytes_to_bucket(image_bytes, blob_path, mime_type)
+
+        uploaded_urls.append(public_url)
+
+    if not uploaded_urls:
+        raise RuntimeError("No valid images were produced for upload.")
+
+    return uploaded_urls

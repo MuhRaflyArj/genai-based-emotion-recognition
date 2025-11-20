@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 class LogFilters(BaseModel):
@@ -9,7 +9,7 @@ class LogFilters(BaseModel):
     success: Optional[bool] = None
     
 class ImageContext(BaseModel):
-    content: str
+    url: str
     format: str
     position_after_paragraph: int
     
@@ -45,11 +45,12 @@ class ClassificationResponse(BaseModel):
     latency_ms: int
 
 class IllustrationRequest(BaseModel):
+    user_id: str
+    journal_id: str
     journal_text: str
-    style_preference: str = "digital painting"
-    num_images: int = 1
-    filled_paragraph: List[int] = []
-
+    num_images: int = Field(ge=1, le=4)
+    style_preference: str | None = "Digital Painting"
+    filled_paragraph: list[str] = []
 class IllustrationResponse(BaseModel):
     images: List[str] # List of base64 encoded images
     prompt: str
