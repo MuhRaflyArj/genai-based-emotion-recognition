@@ -9,6 +9,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
+COPY credential.json ./credential.json
 COPY ./app ./app
 
 EXPOSE 5004

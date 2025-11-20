@@ -2,8 +2,6 @@
 .git
 .gitignore
 
-credential.json
-
 venv
 .venv
 env
