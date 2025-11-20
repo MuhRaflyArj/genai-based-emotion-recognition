@@ -10,8 +10,8 @@ from PIL import Image
 
 from app.config import settings
 
-storage_client = storage.Client()
-
+credentials_path = settings.GOOGLE_APPLICATION_CREDENTIALS
+storage_client = storage.Client.from_service_account_file(credentials_path)
 
 def get_bucket_name() -> str:
     bucket_name = settings.BUCKET_NAME
